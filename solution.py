@@ -1,6 +1,9 @@
 import sys as S,base64 as B,lzma as L,zlib as Z,hashlib as H
 Q=[{'id':33,'preset':9,'nice_len':128}]
 M=(1<<64)-1;X=0x2545F4914F6CDD1D;A=0x5851f42d4c957f2d;G=0x14057b7ef767814f
+AK=bytes.fromhex('7ddc1acb5763de7f8ba0fb776576757204753078bb9aed5651c3bb00542ac01acb2a252b665fe7bf7233d3e717667ca520d106a07373c47dd154579e2ae19c72f1f68da95f76bd85c9e655eb7f7e3c8b0c3bf1f6a8430f977831e64716be775fdc599fa38c49a1f42cb15e82cc8b4496f1da709b72e22612bab2aba135a8dfcd35560d9e1201d290a2299738d8f4413ba07e92f20df6c40f8f00b0bce79c652716c6b57c850560c6b55935730408a3dcdb70a3a4b5838ac1208c1c1259fb01dd915479d00eb58eaf3b39087f6c88da4447bc5388042e42b8b520b238dd8d7cf0bbc03d3e6cbe2dc0dd3492f278bc88f9ed2e4f29bedd31e1236b7a')
+LK=bytes.fromhex('5eca74aad366d917a424e9685944f1451495c038707d88fc84ddcc59ddf06445dce5ec49cc9d519c58e05d35f00098452d05ada401dcbdf9bc3dd4e1e41908e5e4615cd115b0a9805511f181782508c4a8d5645c35ed1820ec40a085381c099c2819c92d89c8d08831c905a8500170f524410485e12115f0ccd850693c3070c4e0e980c59cd5a1645055394cbc3934a9cc6d99753080fca499a0d9f49585c8009c6d11157564e4188df130ec3cf5d07c54757089149918507db9f50840a8ecf9712de1388c69806d54089c81e4115da0c0b444250cd4b1dcf034f5b9c9e15c4d5949bcd0c0e96ce47db9f07d591d6cb8f91c2c09e9a88d08809ccd')
+DK=bytes.fromhex('36b8d56f98885c04eec3d58be04393e0550dc7f8d260e09abb808319e50d0208a0b7fd62c08deccf34de9cc4b05994c40f2fd4dab71a230a1f3e21cbed6cd4803536a53106ff3e2d68321349737d75859b368bc500fd4ea293ee49bcae83ac360a13a088b0baf0acbf00dd7187b8669ffadc785698aaab72d6b2c2f38cf7c1bd789f0552abb195023010bcc4202f13aa0c2f89e34dc0dc38bfdbe4617d283479d1ce67c54ff67834a4c89a47997fde2fb2ae534f1fcb651ae2dda2b18f0519d0ceddb5612e21016ea25d7e148f03f4af1a064e0dc201c780c7b71d7c68aa2e93490751887e5e4fed8ec4959fd9065cef0cf3e27ff916c028ff84ae')
 def Y(x):x^=x>>12;x^=(x<<25)&M;x^=x>>27;return x&M
 def v(y,s):
  x=y
@@ -10,7 +13,7 @@ def q(o):
  x=(o*pow(X,-1,1<<64))&M
  x=v(x,27);x^=(x<<25)&M;x^=(x<<50)&M;x=v(x,12)
  return x&M
-F={(b'IMG ',655360):bytes.fromhex('ff202121ff2420222728252aff2b2424'),(b'CA30',253952):bytes.fromhex('ff2020ff23ff4323ff242348222c2c25264724'),(b'A181',237600):bytes.fromhex('ffff2021'),(b'DUP ',174784):bytes.fromhex('ffffffffffffffff'),(b'WAVE',131090):bytes.fromhex('ffffff212124ff2327'),(b'SEQ2',174784):bytes.fromhex('64ff2421ffff'),(b'SEQ2',149991):bytes.fromhex('21ffff')}
+F={(b'IMG ',655360):bytes.fromhex('ff202121ff2420222728252aff2b2424'),(b'CA30',253952):bytes.fromhex('ff2020ff23ff4323ff242348222c2c25264724'),(b'DUP ',174784):bytes.fromhex('ffffffff'),(b'WAVE',131090):bytes.fromhex('ffffff212124ff2327'),(b'SEQ2',174784):bytes.fromhex('64ff2421ffff'),(b'SEQ2',149991):bytes.fromhex('21ffff')}
 def f(p,e):
  k=e&7
  if k==2:return bytes((b-(i%256))&255 for i,b in enumerate(p))
@@ -71,15 +74,17 @@ def a(o,x):x=L.compress(x,format=3,filters=Q);o.extend(len(x).to_bytes(4,'big')+
 def R(a,o):n=int.from_bytes(a[o:o+4],'big');return L.decompress(a[o+4:o+4+n],format=3,filters=Q),o+4+n
 def C(s,p):
  y=B.b64decode(open(s,'rb').read());c=J(y);o=bytearray()
+ for x in c:
+  if x[0]==b'LOGS'and x[2]&7==1:x[4]=bytes(a^LK[k%251]for k,a in enumerate(x[4]))
  for x in c:x[4]=f(x[4],x[2])
  h=[i for i,x in enumerate(c) if x[0]==b'HASH' and(x[2]==0 or i==255)]
  r30=[28,43,114,161,51,243,16,200,117]
  r110=[139,83,105,109]
- a181=[127,110,85,215,41,254,108,191,130,118,129,138,147,169,196,24,171,9,250,228,253,78,132,198,236,186,100,144]
+ a181=[127,110,85,215,41,254,108,191,130,118,129,138,147,169,196,24,171,9,250,228,253,78,132,198,236,186,100,144,86,112,155,207]
  s2r=[181,116];s2c=[182];s2a=[i for i,x in enumerate(c) if x[0]==b'SEQ2' and x[3]==31248]
  mt=[i for i,x in enumerate(c) if x[0]==b'MTST']
  toc=[i for i,x in enumerate(c) if x[0]==b'TOC ']
- dup=[91,247,164,201,232,251,187,15,32,238]
+ dup=[91,247,164,201,232,251,187,15,32,238,27,103,163,227]
  pr=[i for i,x in enumerate(c) if x[0]==b'PRNG' and(x[2]&7)!=1]
  W=set(h+r30+r110+a181+s2r+s2c+s2a+mt+toc+dup+pr)
  z=bytearray(b''.join(c[i][4][:32] for i in h))
@@ -116,11 +121,11 @@ def D(s,p):
  h=[i for i,x in enumerate(c) if x[0]==b'HASH' and(x[2]==0 or i==255)]
  r30=[28,43,114,161,51,243,16,200,117]
  r110=[139,83,105,109]
- a181=[127,110,85,215,41,254,108,191,130,118,129,138,147,169,196,24,171,9,250,228,253,78,132,198,236,186,100,144]
+ a181=[127,110,85,215,41,254,108,191,130,118,129,138,147,169,196,24,171,9,250,228,253,78,132,198,236,186,100,144,86,112,155,207]
  s2r=[181,116];s2c=[182];s2a=[i for i,x in enumerate(c) if x[0]==b'SEQ2' and x[3]==31248]
  mt=[i for i,x in enumerate(c) if x[0]==b'MTST']
  toc=[i for i,x in enumerate(c) if x[0]==b'TOC ']
- dup=[91,247,164,201,232,251,187,15,32,238]
+ dup=[91,247,164,201,232,251,187,15,32,238,27,103,163,227]
  pr=[i for i,x in enumerate(c) if x[0]==b'PRNG' and(x[2]&7)!=1]
  W=set(h+r30+r110+a181+s2r+s2c+s2a+mt+toc+dup+pr)
  for i in h:
@@ -160,12 +165,13 @@ def D(s,p):
  for idx,val in [(130,0),(118,1),(129,2),(138,3),(147,4),(169,5),(196,6),(24,7)]:
   num=c[idx][3]//4;u=V(val,num+2);diff=[u[k+1]-u[k] for k in range(1,num)]
   c[idx][4]=(-val).to_bytes(4,'little',signed=True)+b''.join(x.to_bytes(4,'little',signed=True) for x in diff)
- for idx,val in [(171,1),(9,3),(250,4),(228,5),(253,6),(78,7)]:
-  num=(c[idx][3]-4)//2;u=V(val,num+5);c[idx][4]=val.to_bytes(4,'little')+b''.join((x&65535).to_bytes(2,'little') for x in u[2:num+2])
- for idx,val in [(132,0),(198,1),(236,3),(186,5),(100,6),(144,7)]:
-  num=(c[idx][3]-4)//3;u=V(val,num*2+5);terms=u[3:3+num*2+2];gen=bytearray(b'\x00\x00\x00\x01' if val==0 else val.to_bytes(4,'little'))
-  for k in range(num):gen.extend([((terms[2*k]&15)<<4)|((terms[2*k-1]>>8)&15 if k>0 else 0),(terms[2*k]>>4)&255,terms[2*k+1]&255])
-  lt=terms[num*2];gen.extend([((lt&15)<<4)|((terms[num*2-1]>>8)&15),(lt>>4)&255]);c[idx][4]=bytes(gen)
+ for idx,val in [(171,1),(9,3),(250,4),(228,5),(253,6),(78,7),(155,2),(207,0)]:
+   num=(c[idx][3]-4)//2;u=V(val,num+5);c[idx][4]=val.to_bytes(4,'little')+b''.join((x&65535).to_bytes(2,'little') for x in u[2:num+2])
+ for idx,val in [(132,0),(198,1),(236,3),(186,5),(100,6),(144,7),(86,2),(112,4)]:
+   num=(c[idx][3]-4)//3;u=V(val,num*2+5);terms=u[3:3+num*2+2];gen=bytearray(b'\x00\x00\x00\x01' if val==0 else val.to_bytes(4,'little'))
+   for k in range(num):gen.extend([((terms[2*k]&15)<<4)|((terms[2*k-1]>>8)&15 if k>0 else 0),(terms[2*k]>>4)&255,terms[2*k+1]&255])
+   lt=terms[num*2];gen.extend([((lt&15)<<4)|((terms[num*2-1]>>8)&15),(lt>>4)&255]);c[idx][4]=bytes(gen)
+ for i in[86,112,155,207]:c[i][4]=bytes(a^AK[k%251] for k,a in enumerate(c[i][4]))
  u_rc=bytearray((0).to_bytes(4,'little'));s={0};v=0
  for k in range(1,124992//4):x=v-k;v=x if x>0 and x not in s else v+k;s.add(v);u_rc+=v.to_bytes(4,'little')
  c[181][4]=bytes(u_rc);c[116][4]=bytes(u_rc)
@@ -201,6 +207,12 @@ def D(s,p):
  c[15][4]=bytes((c[9][4][k]+k)&255 for k in range(174784))
  c[32][4]=bytes(b^0x5a for b in c[17][4][:174784])
  c[238][4]=bytes(b^0x5a for b in c[9][4][:174784])
+ c[27][4]=bytes(b^0x5a for b in c[11][4][:174784])
+ c[227][4]=bytes(b^0x5a for b in c[137][4][:174784])
+ c[103][4]=bytes((c[78][4][k]+k)&255 for k in range(174784))
+ c[163][4]=bytes(c[129][4][k]^DK[k%251]for k in range(174784))
+ for x in c:
+  if x[0]==b'LOGS'and x[2]&7==1:x[4]=bytes(a^LK[k%251]for k,a in enumerate(x[4]))
  for x in c:x[4]=I(x[4],x[2])
  out=bytearray(h0)
  for x in c:
