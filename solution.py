@@ -2,13 +2,17 @@ import sys as S,base64 as B,lzma as L,zlib as Z,hashlib as H,re
 from math import isqrt
 Q=[{'id':33,'preset':9,'nice_len':128}]
 M=(1<<64)-1;X=0x2545F4914F6CDD1D;A=0x5851f42d4c957f2d;G=0x14057b7ef767814f
-KP=251
+KP=251;MT_N=624;MT_M=227;MT_L1=20188;MT_CW=(MT_L1+8)//8
 AK=bytes.fromhex('7ddc1acb5763de7f8ba0fb776576757204753078bb9aed5651c3bb00542ac01acb2a252b665fe7bf7233d3e717667ca520d106a07373c47dd154579e2ae19c72f1f68da95f76bd85c9e655eb7f7e3c8b0c3bf1f6a8430f977831e64716be775fdc599fa38c49a1f42cb15e82cc8b4496f1da709b72e22612bab2aba135a8dfcd35560d9e1201d290a2299738d8f4413ba07e92f20df6c40f8f00b0bce79c652716c6b57c850560c6b55935730408a3dcdb70a3a4b5838ac1208c1c1259fb01dd915479d00eb58eaf3b39087f6c88da4447bc5388042e42b8b520b238dd8d7cf0bbc03d3e6cbe2dc0dd3492f278bc88f9ed2e4f29bedd31e1236b7a')
 LK=bytes.fromhex('5eca74aad366d917a424e9685944f1451495c038707d88fc84ddcc59ddf06445dce5ec49cc9d519c58e05d35f00098452d05ada401dcbdf9bc3dd4e1e41908e5e4615cd115b0a9805511f181782508c4a8d5645c35ed1820ec40a085381c099c2819c92d89c8d08831c905a8500170f524410485e12115f0ccd850693c3070c4e0e980c59cd5a1645055394cbc3934a9cc6d99753080fca499a0d9f49585c8009c6d11157564e4188df130ec3cf5d07c54757089149918507db9f50840a8ecf9712de1388c69806d54089c81e4115da0c0b444250cd4b1dcf034f5b9c9e15c4d5949bcd0c0e96ce47db9f07d591d6cb8f91c2c09e9a88d08809ccd')
 DK=bytes.fromhex('36b8d56f98885c04eec3d58be04393e0550dc7f8d260e09abb808319e50d0208a0b7fd62c08deccf34de9cc4b05994c40f2fd4dab71a230a1f3e21cbed6cd4803536a53106ff3e2d68321349737d75859b368bc500fd4ea293ee49bcae83ac360a13a088b0baf0acbf00dd7187b8669ffadc785698aaab72d6b2c2f38cf7c1bd789f0552abb195023010bcc4202f13aa0c2f89e34dc0dc38bfdbe4617d283479d1ce67c54ff67834a4c89a47997fde2fb2ae534f1fcb651ae2dda2b18f0519d0ceddb5612e21016ea25d7e148f03f4af1a064e0dc201c780c7b71d7c68aa2e93490751887e5e4fed8ec4959fd9065cef0cf3e27ff916c028ff84ae')
 KCA=bytes.fromhex('f4e35d156b4ff87c00f67bcfd2b58562fbd28c5c444f15ae12ac015a4af14d71efcab1c36663aa4cf8b553f2d77bebb0f99a347ae310ad8c8a3bc1383830cf37745541b0ac4865de04d55c2933bafc74763a6c88edebc9af908cd393713a0a7391372954628f686361be1815dc911e875fe18c5e1a01ba68bd31c46fa18eac0b95def14e90692fb17424258f09d6b34e765ec48a35b98b1f3b8e48bcb299140ae90ee05b7b8ddfb1fff61cd4ef24091fea30be0128fb7d0231562ea3b75b047678c9eb1db422485c7bac7e2ae3298bd9bbd7c750df91f608c89305d321a9e8e9ffd5643bb1e72d575d2ddbc705761492796d7e4cdea75b99959ff9')
 KS2=bytes.fromhex('f8a53b4656cf151f81cecffb9499b11397e289e7c890f0474d50334c8c4afa7e7bca977fcf197d9430efb5974b9613e2e380b3d09bf364ce1eb69c19f3b7b654c1b6590cb1233534f8aa27b0cb3879b39459a314e42b9fafe81b63cec5e903f3ba70a5542bd096324d59a76ca160ec9d22e60e9cdb604ea12d76e1271889586f258ef5d3d532c917b407c02d2754243403bbd7f57e60269d5fca9448704426593c1f77a9c4fc466542ce7755844c5414df07e300da2fc55088452b79cb2aa14ea2e79e260c810970cde15684f29278a0dda3f6b070471689db9fc58732fa3ea70220482460cff09e5f57ced921d1b36ab6ab347f71884f2b4cf7e9')
 K_SPRS=bytes(b^0x04 for b in bytes.fromhex('ddc395ede3bd8b158465349373e149d2008f6d8012a73f5c64b642ceb711bd899812829a6a7121afc696a5c1b377b30054a9d7c06264d97bc2a87ad5aee17216cc282f50ea60347d38b695b65258502d18327a2b48eaaa2548e07efb0e1e41967e51e45122e750ed50a3e5c61732f85f898d724689792fb2e84541200897c0da5be205c4f40ca552214c8ec5de70720d77b9eaa3ad473905b14ca86bdf77bd9091c78d5692d5477121465cd0317ea66b9fd6c3aa662447ebfe45dbc83ac9e5dea4ab3f84a4d7ee884d79598896546e0e13fc6e0757a5b44810c1dfc1d53edda8228cf3c27917f6934a4dcef56e7d34b3059ccc5252f5c68bc7b5ed'))
+K54=bytes.fromhex('c9679491f391dcaa8552aef0481a1d92ccdd51c16c21ebae44f1a8a1ef4d24cb9fd6a300c76fd31c941dad7d12edfa9f511fa9a466f8cbf77c85b32489692bf15a71fa98179134726a9d5ff1e0d88031ba860857af7d077ec33f5334c291db29ca63f480feab74111a347a991f965e0b36742bb709d0c47feb09d9ee15586c3a28c977feedd4803704743dc678903fa572cf1753663cad65d1b3a058fb5281af5b000234417452bc470ae255c89125dd2a7454901a583f777c728b89f34054e74fab6df6a10c996337ed3f5eada30fa72f5c6df07cea2d55d0b6c16290520c90655ae7f9a1bbf1b52099f99c72a25adba30099bbab6f7253aef1fe')
+KIMG0=bytes.fromhex('00ae5d583a5815634c9b673981d3d45b05149808a5e822678d3861682684ed02561f6ac90ea61ad55dd464b4db24335698d6606daf31023eb54c7aed40a0e23893b83351de58fdbba3549638291149f8734fc19e66b4ceb70af69afd0b5812e003aa3d493762bdd8d3fdb350d65f97c2ffbde27ec0190db622c01027dc91a5f3e100be37241d49fecdbdf40fb159f66cbb06de9aaff564ac187a6991329b486692c9cbfd88bd9b758ec32b9c0158ec14e3bd9d59d391f6beb5bb42403a899d2e8662a43f68c550aafe24f697646ac66ee695a439b523e49c197f08ab599bc559ac932e306872387ce9503055bb6b93126ac9507262a6bb9a673837')
+K178=bytes.fromhex('000e6359aebeeab2d8f5e33d5675a5d6e3bbf1cee4d656ac8db635afd33b34be1681cb54763bdaf902682af2866f22723919e26c012c153ca98817fddbda62b60300138730c9089bde04257fc5cb43b3ad803df336cbf814a5d87f0a18b59a00bca596be860c469a89366bc7b18e50294cea4e602e1c9d44e00474c5bac1770bcea933e41d07a33486a60af21699a51c3a193f55fbf6ea8e096dd257cb9e824fe778d17379c0ce8212feacf12fc9e8190418e579297dd3acd4eb140739332f66786b83579897b75894ebc8a2b9354219ac3078bb74b7f1b67101ab4a5e1c98257f31e73ec868795b3872a3a96fb0ead93a4554c9cf20769e49b298')
+KI={54:K54,79:KIMG0,170:KIMG0,208:KIMG0,222:KIMG0}
 K_NOIZ=bytes.fromhex('5c811c54c3c23316ee77143e535e0fdff179759c8ba0aea27ada14220c676475a3171d9013a8336f619366d0fd9b4f848936187a9a46399035bd7627bc443b10ac8f970a0c09f6530734d27d8b2f4505e3b4242ab418273557fea3c4583aa3a12def9d585662652ebcbd54c3c487ce294289bfb15db9a65ba5b3615b59b36b7b5a38b4f03b334e5ea1536594c5ef84a98bd9db9af4ec866ed4c57c9e57d74e36bc2db0519e8dc2cc1b0d46a85e618d5a4ab87c78a911e111e3333bb08e23b2c0ce251fc8cb58233597385c3d546c39846c4be3d050d295747621905a53abcf0ee54212378cb6fd8566d81f2c878e52ad9e8dd79a67cb6d366cc5ca')
 L0=re.compile(rb'^(\d+) (\d+)\.(\d+)\.(\d+)\.(\d+) "(\w+) (/[^?"]*)\?id=(\d+)" (\d+) (\d+) (\d+)ms "([^/]+)/(\d+)\.(\d+) \(([^)]+)\)"$')
 L1=re.compile(rb'^(\d+),(\d+)\.(\d+)\.(\d+)\.(\d+),([^,]+),([\d.]+),(\d+)$')
@@ -40,12 +44,16 @@ def cdi_u(b,p,n):
  for _ in range(n):i,p=vr(b,p);out.append(d[i])
  return out,p
 def logse0(lines,o):
- pa=[]
- for Lx in lines:
+ rec=[];exc=[]
+ for k,Lx in enumerate(lines):
   m=L0.match(Lx)
-  if not m:return False
-  pa.append(m.groups())
- vi(len(lines),o);pv=0
+  if m:rec.append((k,m.groups()))
+  else:exc.append((k,Lx))
+ if not rec or len(rec)*1000<len(lines)*980:return False
+ vi(len(lines),o);vi(len(exc),o)
+ for k,Lx in exc:vi(k,o);vi(len(Lx),o);o+=Lx
+ pa=[g for _,g in rec]
+ vi(len(rec),o);pv=0
  for g in pa:t=int(g[0]);zvi(t-pv,o);pv=t
  for g in pa:
   for k in range(1,5):o.append(int(g[k]))
@@ -57,28 +65,37 @@ def logse0(lines,o):
  cdi([g[14]for g in pa],o)
  return True
 def logsd0(b):
- p=0;n,p=vr(b,p);ts=[];pv=0
- for _ in range(n):d,p=zvr(b,p);pv+=d;ts.append(pv)
+ p=0;n,p=vr(b,p);ne,p=vr(b,p);exc={}
+ for _ in range(ne):
+  k,p=vr(b,p);l,p=vr(b,p);exc[k]=b[p:p+l];p+=l
+ nr,p=vr(b,p);ts=[];pv=0
+ for _ in range(nr):d,p=zvr(b,p);pv+=d;ts.append(pv)
  ip=[]
- for _ in range(n):ip.append((b[p],b[p+1],b[p+2],b[p+3]));p+=4
- me,p=cdi_u(b,p,n);pa,p=cdi_u(b,p,n)
+ for _ in range(nr):ip.append((b[p],b[p+1],b[p+2],b[p+3]));p+=4
+ me,p=cdi_u(b,p,nr);pa,p=cdi_u(b,p,nr)
  ids=[]
- for _ in range(n):v,p=vr(b,p);ids.append(v)
- st,p=cdi_u(b,p,n);sz,p=cdi_u(b,p,n)
- du,p=cdi_u(b,p,n);pr,p=cdi_u(b,p,n)
- v1,p=cdi_u(b,p,n);v2,p=cdi_u(b,p,n)
- sy,p=cdi_u(b,p,n)
- out=[]
- for k in range(n):out.append(b'%d %d.%d.%d.%d "%s %s?id=%d" %s %s %sms "%s/%s.%s (%s)"'%(ts[k],ip[k][0],ip[k][1],ip[k][2],ip[k][3],me[k],pa[k],ids[k],st[k],sz[k],du[k],pr[k],v1[k],v2[k],sy[k]))
+ for _ in range(nr):v,p=vr(b,p);ids.append(v)
+ st,p=cdi_u(b,p,nr);sz,p=cdi_u(b,p,nr)
+ du,p=cdi_u(b,p,nr);pr,p=cdi_u(b,p,nr)
+ v1,p=cdi_u(b,p,nr);v2,p=cdi_u(b,p,nr)
+ sy,p=cdi_u(b,p,nr)
+ out=[];r=0
+ for k in range(n):
+  if k in exc:out.append(exc[k])
+  else:out.append(b'%d %d.%d.%d.%d "%s %s?id=%d" %s %s %sms "%s/%s.%s (%s)"'%(ts[r],ip[r][0],ip[r][1],ip[r][2],ip[r][3],me[r],pa[r],ids[r],st[r],sz[r],du[r],pr[r],v1[r],v2[r],sy[r]));r+=1
  return b'\n'.join(out)
 def logse1(lines,o):
  if not lines:return False
- hd=lines[0];pa=[]
- for Lx in lines[1:]:
+ hd=lines[0];rec=[];exc=[]
+ for k,Lx in enumerate(lines[1:],1):
   m=L1.match(Lx)
-  if not m:return False
-  pa.append(m.groups())
- vi(len(hd),o);o+=hd;vi(len(pa),o);pv=0
+  if m:rec.append((k,m.groups()))
+  else:exc.append((k,Lx))
+ if not rec or len(rec)*1000<len(lines)*980:return False
+ vi(len(lines),o);vi(len(hd),o);o+=hd;vi(len(exc),o)
+ for k,Lx in exc:vi(k,o);vi(len(Lx),o);o+=Lx
+ pa=[g for _,g in rec]
+ vi(len(rec),o);pv=0
  for g in pa:t=int(g[0]);zvi(t-pv,o);pv=t
  for g in pa:
   for k in range(1,5):o.append(int(g[k]))
@@ -86,36 +103,54 @@ def logse1(lines,o):
  for g in pa:vi(int(g[7]),o)
  return True
 def logsd1(b):
- p=0;l,p=vr(b,p);hd=b[p:p+l];p+=l;n,p=vr(b,p);ts=[];pv=0
- for _ in range(n):d,p=zvr(b,p);pv+=d;ts.append(pv)
+ p=0;n,p=vr(b,p);l,p=vr(b,p);hd=b[p:p+l];p+=l;ne,p=vr(b,p);exc={}
+ for _ in range(ne):
+  k,p=vr(b,p);l,p=vr(b,p);exc[k]=b[p:p+l];p+=l
+ nr,p=vr(b,p);ts=[];pv=0
+ for _ in range(nr):d,p=zvr(b,p);pv+=d;ts.append(pv)
  ip=[]
- for _ in range(n):ip.append((b[p],b[p+1],b[p+2],b[p+3]));p+=4
- me,p=cdi_u(b,p,n);va,p=cdi_u(b,p,n)
+ for _ in range(nr):ip.append((b[p],b[p+1],b[p+2],b[p+3]));p+=4
+ me,p=cdi_u(b,p,nr);va,p=cdi_u(b,p,nr)
  fl=[]
- for _ in range(n):v,p=vr(b,p);fl.append(v)
- out=[hd]
- for k in range(n):out.append(b'%d,%d.%d.%d.%d,%s,%s,%d'%(ts[k],ip[k][0],ip[k][1],ip[k][2],ip[k][3],me[k],va[k],fl[k]))
+ for _ in range(nr):v,p=vr(b,p);fl.append(v)
+ out=[];r=0
+ for k in range(n):
+  if k==0:out.append(hd);continue
+  if k in exc:out.append(exc[k]);continue
+  out.append(b'%d,%d.%d.%d.%d,%s,%s,%d'%(ts[r],ip[r][0],ip[r][1],ip[r][2],ip[r][3],me[r],va[r],fl[r]));r+=1
  return b'\n'.join(out)
 def logse2(lines,o,wid):
- vi(len(lines),o)
- for Lx in lines:
+ rec=[];exc=[]
+ for k,Lx in enumerate(lines):
+  ok=True
+  for w in Lx.rstrip(b'.').split(b' '):
+   if w not in wid:ok=False;break
+  if ok:rec.append((k,Lx))
+  else:exc.append((k,Lx))
+ if not rec:return False
+ vi(len(lines),o);vi(len(exc),o)
+ for k,Lx in exc:vi(k,o);vi(len(Lx),o);o+=Lx
+ vi(len(rec),o)
+ for k,Lx in rec:
   dot=1 if Lx.endswith(b'.') else 0
   L2=Lx[:-1] if dot else Lx
-  w=L2.split(b' ')
-  vi(len(w),o);o.append(dot)
-  for x in w:
-   idx=wid.get(x)
-   if idx is None:return False
-   vi(idx,o)
+  w=L2.split(b' ');vi(len(w),o);o.append(dot)
+  for x in w:vi(wid[x],o)
  return True
 def logsd2(b,dw):
- p=0;n,p=vr(b,p);out=[]
- for _ in range(n):
+ p=0;n,p=vr(b,p);ne,p=vr(b,p);exc={}
+ for _ in range(ne):
+  k,p=vr(b,p);l,p=vr(b,p);exc[k]=b[p:p+l];p+=l
+ nr,p=vr(b,p);recs=[]
+ for _ in range(nr):
   nw,p=vr(b,p);dot=b[p];p+=1
   w=[]
   for _ in range(nw):i,p=vr(b,p);w.append(dw[i])
-  Lx=b' '.join(w)+(b'.' if dot else b'')
-  out.append(Lx)
+  recs.append(b' '.join(w)+(b'.' if dot else b''))
+ out=[];r=0
+ for k in range(n):
+  if k in exc:out.append(exc[k])
+  else:out.append(recs[r]);r+=1
  return b'\n'.join(out)
 def cnst_gen(e0,n):
  N=n+4
@@ -147,7 +182,62 @@ def q(o):
  x=(o*pow(X,-1,1<<64))&M
  x=v(x,27);x^=(x<<25)&M;x^=(x<<50)&M;x=v(x,12)
  return x&M
-F={(b'IMG ',655360):bytes.fromhex('ff202121ff2420222728252aff2b2424'),(b'CA30',253952):bytes.fromhex('ff2020ff23ff4323ff242348222c2c25264724'),(b'DUP ',174784):bytes.fromhex('ffffffff'),(b'WAVE',131090):bytes.fromhex('ffffff212124ff2327'),(b'SEQ2',174784):bytes.fromhex('64ff2421ffff'),(b'SEQ2',149991):bytes.fromhex('21ffff')}
+def lpred(qq,Bt):
+ y=0
+ while qq:
+  p=qq.bit_length()-1;vv=Bt[p]
+  qq^=vv[0];y^=vv[1]
+ return y
+def mt_tables(Bt):
+ T=[]
+ for wi in range(4):
+  for p in range(4):
+   t=[0]*256
+   for vv in range(1,256):
+    lb=vv&-vv
+    t[vv]=t[vv-lb]^lpred(1<<(32*wi+8*p+lb.bit_length()-1),Bt)
+   T.append(t)
+ return T
+def mt_gen(words,nw,T):
+ t0,t1,t2,t3,t4,t5,t6,t7=T[0],T[1],T[2],T[3],T[4],T[5],T[6],T[7]
+ t8,t9,ta,tb,tc,td,te,tf=T[8],T[9],T[10],T[11],T[12],T[13],T[14],T[15]
+ while len(words)<nw:
+  i=len(words)-MT_N
+  a=words[i];b=words[i+1];c=words[i+MT_M];d=words[i+MT_M+1]
+  words.append(t0[a&255]^t1[(a>>8)&255]^t2[(a>>16)&255]^t3[a>>24]
+               ^t4[b&255]^t5[(b>>8)&255]^t6[(b>>16)&255]^t7[b>>24]
+               ^t8[c&255]^t9[(c>>8)&255]^ta[(c>>16)&255]^tb[c>>24]
+               ^tc[d&255]^td[(d>>8)&255]^te[(d>>16)&255]^tf[d>>24])
+ return words
+def mt_fit_check(payload):
+ nw=len(payload)//4
+ if nw<MT_N+700:return None
+ words=[int.from_bytes(payload[j:j+4],"big") for j in range(0,4*nw,4)]
+ Bt=[None]*128
+ for i in range(500):
+  qq=(words[i]|words[i+1]<<32|words[i+MT_M]<<64|words[i+MT_M+1]<<96)
+  y=words[i+MT_N]
+  while qq:
+   bb=qq.bit_length()-1;vv=Bt[bb]
+   if vv is None:Bt[bb]=(qq,y);break
+   qq^=vv[0];y^=vv[1]
+  if not qq and y:return None
+ if any(vv is None for vv in Bt):return None
+ T=mt_tables(Bt)
+ pred=mt_gen(words[:MT_N],nw,T)
+ for i in range(MT_N,nw):
+  if pred[i]!=words[i]:return None
+ return Bt
+def bm(a):
+ C=B=1;LL=0;m=-1;Hh=0
+ for N,v in enumerate(a):
+  Hh=Hh<<1|(v>>7)
+  if(C&Hh).bit_count()&1:
+   T=C;C^=B<<(N-m)
+   if 2*LL<=N:LL=N+1-LL;B=T;m=N
+ return C
+TP={(b'IMG ',655360):{4:(1,0),6:(2,2048),12:(3,2048)},(b'DUP ',174784):{2:(3,128)}}
+F={(b'IMG ',655360):bytes.fromhex('ff202020ff24ff2020202424ff242424'),(b'CA30',253952):bytes.fromhex('ff2020ff23ff4323ff242348222c2c25264724'),(b'DUP ',174784):bytes.fromhex('ffffffff'),(b'WAVE',131090):bytes.fromhex('ffffff212124ff2327'),(b'SEQ2',174784):bytes.fromhex('64ff2421ffff'),(b'SEQ2',149991):bytes.fromhex('21ffff')}
 def f(p,e):
  k=e&7
  if k==2:return bytes((b-(i%256))&255 for i,b in enumerate(p))
@@ -172,20 +262,29 @@ def V(v,m):
  a=[v];l={}
  for i in range(m):x=a[i];a.append(i-l[x] if x in l else 0);l[x]=i
  return a
-def b(a):
- C=B=1;L=0;m=-1;H=0
- for N,v in enumerate(a):
-  H=H<<1|(v>>7)
-  if(C&H).bit_count()&1:
-   T=C;C^=B<<(N-m)
-   if 2*L<=N:L=N+1-L;B=T;m=N
- return C
 def d(c,p,k):
  if k==1:return bytes(a^b for a,b in zip(c,p))
  return bytes(((a-b)if k==2 else(b-a))&255 for a,b in zip(c,p))
 def U(d,p,k):
  if k==1:return bytes(a^b for a,b in zip(d,p))
  return bytes(((a+b)if k==2 else(b-a))&255 for a,b in zip(d,p))
+def T(x,op,W):
+ n=len(x)
+ if op==1:return x[:1]+bytes((x[k]-x[k-1])&255 for k in range(1,n))
+ if op==2:return x[:W]+bytes(x[k]^x[k-W] for k in range(W,n))
+ return x[:W]+bytes((x[k]-x[k-W])&255 for k in range(W,n))
+def Ti(x,op,W):
+ n=len(x)
+ if op==1:
+  y=bytearray(x[:1]);s=y[0]
+  for k in range(1,n):s=(s+x[k])&255;y.append(s)
+  return bytes(y)
+ y=bytearray(x[:W])
+ if op==2:
+  for k in range(W,n):y.append(y[k-W]^x[k])
+ else:
+  for k in range(W,n):y.append((y[k-W]+x[k])&255)
+ return bytes(y)
 def g0():
  c=b'\x00'*127+b'\x01'+b'\x00'*128;r=[c]
  for _ in range(1,992):
@@ -200,11 +299,14 @@ def g1():
     t=((1<<2048)-1);t&=l if(p&4)else~l;t&=x if(p&2)else~x;t&=R if(p&1)else~R;s|=t
   c=(s&((1<<2048)-1)).to_bytes(256,'big');r.append(c)
  return b''.join(r)
-def J(d):
+def J(dd):
  o=80;r=[]
- while o<len(d):n=int.from_bytes(d[o:o+4],'big');r.append([d[o+4:o+8],d[o+8],d[o+9],n,d[o+10:o+10+n]]);o+=14+n
+ while o<len(dd):n=int.from_bytes(dd[o:o+4],'big');r.append([dd[o+4:o+8],dd[o+8],dd[o+9],n,dd[o+10:o+10+n]]);o+=14+n
  return r
-def a(o,x):x=L.compress(x,format=3,filters=Q);o.extend(len(x).to_bytes(4,'big')+x)
+def a(o,x,lbl=""):
+ y=L.compress(x,format=3,filters=Q)
+ o.extend(len(y).to_bytes(4,'big')+y)
+ if lbl:print(f"  {lbl}: raw={len(x)} lzma={len(y)}")
 def R(a,o):n=int.from_bytes(a[o:o+4],'big');return L.decompress(a[o+4:o+4+n],format=3,filters=Q),o+4+n
 def C(s,p):
  y=B.b64decode(open(s,'rb').read());c=J(y);o=bytearray()
@@ -213,7 +315,7 @@ def C(s,p):
   if x[0]==b'PRNG'and x[2]&7==1:
    kk=lck(x[4])
    if kk:pk=bytearray(kk);break
- for x in c:
+ for xi,x in enumerate(c):
   if x[2]&7==1:
    if x[0]==b'PRNG':x[4]=bytes(a^pk[k%KP]for k,a in enumerate(x[4]))
    elif x[0]==b'LOGS':x[4]=bytes(a^LK[k%251]for k,a in enumerate(x[4]))
@@ -221,6 +323,8 @@ def C(s,p):
    elif x[0]==b'NOIZ':x[4]=bytes(a^K_NOIZ[k%251]for k,a in enumerate(x[4]))
    elif x[0]==b'CA30':x[4]=bytes(a^KCA[k%251]for k,a in enumerate(x[4]))
    elif x[0]==b'SEQ2'and x[3]==149991:x[4]=bytes(a^KS2[k%251]for k,a in enumerate(x[4]))
+   elif x[0]==b'IMG 'and xi in KI:x[4]=bytes(a^KI[xi][k%251]for k,a in enumerate(x[4]))
+   elif x[0]==b'DUP 'and xi==178:x[4]=bytes(a^K178[k%251]for k,a in enumerate(x[4]))
  for x in c:x[4]=f(x[4],x[2])
  pr=[]
  for i,x in enumerate(c):
@@ -240,6 +344,19 @@ def C(s,p):
  for i,x in enumerate(c):
   if x[0]==b'CNST'and x[1]<=3and x[3]==16383and cnst_gen(x[1],x[3])==x[4]:cm[i>>3]|=1<<(i&7)
  cn=[i for i in range(len(c)) if cm[i>>3]&(1<<(i&7))]
+ mt4r=[];mt4_basis=None;mt1r=[];bm_c=None
+ for i,x in enumerate(c):
+  if x[0]!=b'MTST':continue
+  if x[2]&7==4:
+   raw=I(x[4],x[2])
+   BB=mt_fit_check(raw)
+   if BB is None:continue
+   mt4r.append(i)
+   if mt4_basis is None:mt4_basis=BB
+  elif x[2]&7==1:
+   mt1r.append(i)
+ if mt1r:
+  bm_c=bm(c[mt1r[0]][4][0::4][:2*MT_L1+100])
  syl_words_list=[];syl_wid={}
  for i,x in enumerate(c):
   if x[0]!=b'LOGS' or x[1]!=2:continue
@@ -247,8 +364,7 @@ def C(s,p):
   for Lx in (strip.split(b'\n') if strip else []):
    L2=Lx[:-1] if Lx.endswith(b'.') else Lx
    for w in L2.split(b' '):
-    if w not in syl_wid:
-     syl_wid[w]=len(syl_words_list);syl_words_list.append(w)
+    if w not in syl_wid:syl_wid[w]=len(syl_words_list);syl_words_list.append(w)
  lstream=bytearray()
  vi(len(syl_words_list),lstream)
  for w in syl_words_list:vi(len(w),lstream);lstream+=w
@@ -271,27 +387,37 @@ def C(s,p):
  r110=[139,83,105,109]
  a181=[127,110,85,215,41,254,108,191,130,118,129,138,147,169,196,24,171,9,250,228,253,78,132,198,236,186,100,144,86,112,155,207]
  s2r=[181,116];s2c=[182];s2a=[i for i,x in enumerate(c) if x[0]==b'SEQ2' and x[3]==31248]
- mt=[i for i,x in enumerate(c) if x[0]==b'MTST']
  toc=[i for i,x in enumerate(c) if x[0]==b'TOC ']
  dup=[91,247,164,201,232,251,187,15,32,238,27,103,163,227]
- W=set(h+r30+r110+a181+s2r+s2c+s2a+mt+toc+dup+pr+cn+list(lids))
+ W=set(h+r30+r110+a181+s2r+s2c+s2a+mt4r+mt1r+toc+dup+pr+cn+list(lids))
  z=bytearray(b''.join(c[i][4][:32] for i in h))
- for m,L in [(1,20188),(4,19937)]:
-  C2=b(c[next(i for i in mt if c[i][2]==m)][4][0::4][:2*L+100])
-  z+=C2.to_bytes((L+8)//8,'big')
- for i in mt:L=20188 if c[i][2]==1 else 19937;x=c[i][4];z+=x[:4*L]
+ for i in mt4r:
+  raw=I(c[i][4],c[i][2])
+  z+=raw[:MT_N*4]
+ for i in mt1r:
+  z+=c[i][4][:MT_L1*4]
  for i in pr:
   x=c[i][4];w=int.from_bytes(x[:8],'little')
   z+=(w if c[i][1]==1 else q(w)).to_bytes(8,'little')
- meta=y[:80]+b''.join(x[3].to_bytes(4,'big')+x[0]+bytes([x[1],x[2]]) for x in c)+bytes(pk)+bytes(prm)+bytes(cm)+bytes(lmask)
- a(o,meta);a(o,z);a(o,bytes(lstream))
+ hdr=bytearray()
+ hdr+=bytes((1 if mt4r else 0,))
+ if mt4r:
+  for qq,yy in mt4_basis:hdr+=qq.to_bytes(16,'big')+yy.to_bytes(4,'big')
+ hdr+=bytes((1 if mt1r else 0,))
+ if mt1r:hdr+=bm_c.to_bytes(MT_CW,'big')
+ CI=80+256*10
+ cinfo=b''.join(x[3].to_bytes(4,'big')+x[0]+bytes([x[1],x[2]]) for x in c)
+ meta=y[:80]+cinfo+bytes(hdr)+bytes(pk)+bytes(prm)+bytes(cm)+bytes(lmask)
+ a(o,meta,"meta")
+ a(o,z,"z")
+ a(o,bytes(lstream),"lstream")
  for(t,n),plan in F.items():
-  ids=[i for i,x in enumerate(c) if x[0]==t and x[3]==n and i not in W];W.update(ids);Z=bytearray()
+  ids=[i for i,x in enumerate(c) if x[0]==t and x[3]==n and i not in W];W.update(ids);ZZ=bytearray();TR=TP.get((t,n),{})
   for j,code in enumerate(plan):
    x=c[ids[j]][4]
-   if code!=255:x=d(x,c[ids[code&31]][4],code>>5)
-   Z+=x
-  a(o,Z)
+   if code==255:tr=TR.get(j);ZZ+=T(x,tr[0],tr[1])if tr else x
+   else:ZZ+=d(x,c[ids[code&31]][4],code>>5)
+  a(o,ZZ,f"FPLAN[{t.decode().strip()}:{n}]")
  g={}
  for i,x in enumerate(c):
   if i not in W:g.setdefault((x[0],0 if x[0]==b'LOGS' else x[3]),[]).append(i)
@@ -299,13 +425,29 @@ def C(s,p):
  for x in g.values():
   k=K.get(c[x[0]][0])
   if k is not None:x.sort(key=lambda i:(c[i][1],i),reverse=True)
- for ids in g.values():a(o,b''.join(c[i][4] for i in ids))
+ for ids in g.values():
+  Z2=b''.join(c[i][4] for i in ids)
+  kk=c[ids[0]][0];nn=0 if kk==b'LOGS' else c[ids[0]][3]
+  a(o,Z2,f"group[{kk.decode().strip()}:{nn}] n={len(ids)}")
  open(p,'wb').write(o)
 def D(s,p):
  y=open(s,'rb').read();meta,o=R(y,0);h0=meta[:80]
- pk=meta[-347:-96];prm=meta[-96:-64];cm=meta[-64:-32];lmask=meta[-32:]
+ CI=80+256*10
+ lmask=meta[-32:];cm=meta[-64:-32];prm=meta[-96:-64];pk=meta[-347:-96]
+ hdrend=len(meta)-347
+ hdr=meta[CI:hdrend]
+ hp=0
+ has_mt4r=hdr[hp];hp+=1
+ basis=[]
+ if has_mt4r:
+  for _ in range(128):basis.append((int.from_bytes(hdr[hp:hp+16],'big'),int.from_bytes(hdr[hp+16:hp+20],'big')));hp+=20
+ has_mt1=hdr[hp];hp+=1
+ bm_taps=[]
+ if has_mt1:
+  bm_c=int.from_bytes(hdr[hp:hp+MT_CW],'big');hp+=MT_CW
+  bm_taps=[k for k in range(1,MT_L1+1) if (bm_c>>k)&1]
  c=[]
- for q in range(80,len(meta)-347,10):
+ for q in range(80,CI,10):
   n=int.from_bytes(meta[q:q+4],'big');T=meta[q+4:q+8];e0=meta[q+8];e1=meta[q+9];c.append([T,e0,e1,n,None])
  z,o=R(y,o)
  lstream,o=R(y,o)
@@ -330,31 +472,35 @@ def D(s,p):
  r110=[139,83,105,109]
  a181=[127,110,85,215,41,254,108,191,130,118,129,138,147,169,196,24,171,9,250,228,253,78,132,198,236,186,100,144,86,112,155,207]
  s2r=[181,116];s2c=[182];s2a=[i for i,x in enumerate(c) if x[0]==b'SEQ2' and x[3]==31248]
- mt=[i for i,x in enumerate(c) if x[0]==b'MTST']
  toc=[i for i,x in enumerate(c) if x[0]==b'TOC ']
  dup=[91,247,164,201,232,251,187,15,32,238,27,103,163,227]
  pr=[i for i in range(len(c)) if prm[i>>3]&(1<<(i&7))]
  cn=[i for i in range(len(c)) if cm[i>>3]&(1<<(i&7))]
- W=set(h+r30+r110+a181+s2r+s2c+s2a+mt+toc+dup+pr+cn+list(lids))
+ mt4r=[i for i,x in enumerate(c) if x[0]==b'MTST' and x[2]&7==4]
+ mt1r=[i for i,x in enumerate(c) if x[0]==b'MTST' and x[2]&7==1]
+ W=set(h+r30+r110+a181+s2r+s2c+s2a+mt4r+mt1r+toc+dup+pr+cn+list(lids))
  for i in h:
   seed=z[:32];z=z[32:];n=c[i][3];h2=seed;x=bytearray(h2)
   while len(x)<n:h2=H.sha256(h2).digest();x+=h2
   c[i][4]=bytes(x[:n])
- P={}
- for m,L in [(1,20188),(4,19937)]:w=(L+8)//8;C2=int.from_bytes(z[:w],'big');z=z[w:];P[m]=(L,[k for k in range(1,L+1) if(C2>>k)&1])
- for i in mt:
-  n=c[i][3];L,T=P[c[i][2]];e=z[:4*L];z=z[4*L:];x=bytearray(n);rem=n//4-L
-  Tc=[q for q in T if q>=rem];Td=[q for q in T if q<rem]
+ Tt=mt_tables(basis) if has_mt4r else None
+ for i in mt4r:
+  n=c[i][3]
+  raw=z[:MT_N*4];z=z[MT_N*4:]
+  words=[int.from_bytes(raw[j:j+4],'big') for j in range(0,MT_N*4,4)]
+  words=mt_gen(words,n//4,Tt)
+  c[i][4]=b''.join(w.to_bytes(4,'big') for w in words[:n//4])
+ for i in mt1r:
+  n=c[i][3]
+  e=z[:4*MT_L1];z=z[4*MT_L1:]
+  x=bytearray(n);nw=n//4
   for k in range(4):
-   y2=bytearray(e[k:4*L:4])
-   if rem>0:
-    acc=0
-    for q in Tc:acc^=int.from_bytes(y2[L-q:L-q+rem],'big')
-    vc=acc.to_bytes(rem,'big')
-    for s in range(rem):
-     v=vc[s]
-     for q in Td:v^=y2[-q]
-     y2.append(v)
+   y2=bytearray(e[k:4*MT_L1:4]);y2+=bytearray(nw-MT_L1)
+   j=MT_L1
+   while j<nw:
+    vv=0
+    for qq in bm_taps:vv^=y2[j-qq]
+    y2[j]=vv;j+=1
    x[k::4]=y2
   c[i][4]=bytes(x)
  for i in pr:
@@ -396,9 +542,12 @@ def D(s,p):
  for i in toc:c[i][4]=bytes(r_toc)
  for i in cn:c[i][4]=cnst_gen(c[i][1],c[i][3])
  for(t,n),plan in F.items():
-  ids=[i for i,x in enumerate(c) if x[0]==t and x[3]==n and i not in W];W.update(ids);x,o=R(y,o);raw=[x[j*n:(j+1)*n] for j in range(len(ids))];done=[None]*len(ids)
+  ids=[i for i,x in enumerate(c) if x[0]==t and x[3]==n and i not in W];W.update(ids);x,o=R(y,o);raw=[x[j*n:(j+1)*n] for j in range(len(ids))];done=[None]*len(ids);TR=TP.get((t,n),{})
   def get(j):
-   if done[j] is None:code=plan[j];done[j]=raw[j] if code==255 else U(raw[j],get(code&31),code>>5)
+   if done[j] is None:
+    code=plan[j]
+    if code==255:tr=TR.get(j);done[j]=Ti(raw[j],tr[0],tr[1])if tr else raw[j]
+    else:done[j]=U(raw[j],get(code&31),code>>5)
    return done[j]
   for j,i in enumerate(ids):c[i][4]=get(j)
  g={}
@@ -420,7 +569,7 @@ def D(s,p):
  c[227][4]=bytes(b^0x5a for b in c[137][4][:174784])
  c[103][4]=bytes((c[78][4][k]+k)&255 for k in range(174784))
  c[163][4]=bytes(c[129][4][k]^DK[k%251]for k in range(174784))
- for x in c:
+ for xi,x in enumerate(c):
   if x[2]&7==1:
    if x[0]==b'PRNG':x[4]=bytes(a^pk[k%KP]for k,a in enumerate(x[4]))
    elif x[0]==b'LOGS':x[4]=bytes(a^LK[k%251]for k,a in enumerate(x[4]))
@@ -428,7 +577,11 @@ def D(s,p):
    elif x[0]==b'NOIZ':x[4]=bytes(a^K_NOIZ[k%251]for k,a in enumerate(x[4]))
    elif x[0]==b'CA30':x[4]=bytes(a^KCA[k%251]for k,a in enumerate(x[4]))
    elif x[0]==b'SEQ2'and x[3]==149991:x[4]=bytes(a^KS2[k%251]for k,a in enumerate(x[4]))
- for x in c:x[4]=I(x[4],x[2])
+   elif x[0]==b'IMG 'and xi in KI:x[4]=bytes(a^KI[xi][k%251]for k,a in enumerate(x[4]))
+   elif x[0]==b'DUP 'and xi==178:x[4]=bytes(a^K178[k%251]for k,a in enumerate(x[4]))
+ for i,x in enumerate(c):
+  if i in mt4r or i in mt1r:continue
+  x[4]=I(x[4],x[2])
  out=bytearray(h0)
  for x in c:
   crc=Z.crc32(x[0]+bytes([x[1],x[2]])+x[4]).to_bytes(4,'big')
